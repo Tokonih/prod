@@ -11,94 +11,58 @@ import { useEffect, useState } from "react";
 import { BASEURL } from "../common/config";
 import axios from "axios";
 import "../styles/style.css"
+;
 
 export default function Dashboard() {
   
     const [sales, setSales] = useState()
-    const [agent, setAgent] = useState()
+    const [allCrypto, setAllCrypto] = useState()
+    const [crypto, setCrypto] = useState(null)
+    const [searchTerm, setSearchTerm] = useState("");
+    const [filteredCrypto, setFilteredCrypto] = useState([]);
     const navigate = useNavigate()
 
     useEffect(()=>{
-        const apiUrl = "https://coinremitter.com/api/v3/get-coin-rate"
+        const apiUrl = `${BASEURL}/api/data`
         axios.get(apiUrl)
         .then((res)=> {
-            console.log(res.data)
-            setSales(res.data.data)
-            setAgent(res.data.data.slice(0,3))
-           
+            if (res.status === 200) {
+                const cryptoArray = Object.values(res.data.data);
+                const firstFourCrypto = cryptoArray.slice(0, 4);
+                setCrypto(firstFourCrypto);
+                setAllCrypto(res.data.data)
+                setFilteredCrypto(cryptoArray);
+            }
         }).catch((err)=>{
             console.log(err)
         })
     }, [])
 
-    const token = localStorage.getItem("token");
-    const [dealName, setDealName] = useState()
-    const [deals, setDeals] = useState()
-    useEffect(()=>{
-        const apiUrl = BASEURL + "/sales-agent/deal/all"
-        let adminToken = localStorage.getItem("sator-agent-token")
-        const headers = {
-            's-token': `${adminToken}`, 
-            'Content-Type': 'application/json', 
-          };
     
-        axios.get(apiUrl, {headers})
-        .then((res)=> {
-            // console.log(res.data.data)
-            setDealName(res.data.data)
-            setDeals(res.data.data.slice(0,3))
-           
-        }).catch((err)=>{
-            console.log(err)
-        })
-    }, [])
-
-    const [products, setProducts] = useState()
-    useEffect(()=>{
-        const apiUrl = "https://sartor-server-beta.onrender.com/api/v1/admin/product/all"
-        let adminToken = localStorage.getItem("sator-agent-token")
-        const headers = {
-            's-token': `${adminToken}`, 
-            'Content-Type': 'application/json', 
-          };
+  // Function to handle search
+  const handleSearch = (e) => {
+    const searchTerm = e.target.value.toLowerCase();
+    setSearchTerm(searchTerm);
     
-        axios.get(apiUrl, {headers})
-        .then((res)=> {
-            // console.log(res.data.data)
-            setProducts(res.data.data)
-           
-        }).catch((err)=>{
-            console.log(err)
-        })
+    const filteredCrypto = Object.entries(crypto)
+        .filter(([key, cryptoItem]) =>
+            cryptoItem.name.toLowerCase().includes(searchTerm) || 
+            cryptoItem.symbol.toLowerCase().includes(searchTerm)
+        )
+        .map(([key, cryptoItem]) => cryptoItem);
+        
+    setFilteredCrypto(filteredCrypto);
+};
 
-    }, [])
 
-    const [company, setCompany] = useState()
-    const [companies, setCompanies] = useState()
-    useEffect(()=>{
-        const apiUrl = "https://sartor-server-beta.onrender.com/api/v1/sales-agent/company/all"
-        let adminToken = localStorage.getItem("sator-agent-token")
-        const headers = {
-            's-token': `${adminToken}`, 
-            'Content-Type': 'application/json', 
-          };
-    
-        axios.get(apiUrl, {headers})
-        .then((res)=> {
-            // console.log(res.data.data)
-            setCompany(res.data.data)
-            setCompanies(res.data.data.slice(0, 3))
-            
-           
-        }).catch((err)=>{
-            console.log(err)
-        })
-
-    }, [])
 
     let userData = JSON.parse(localStorage.getItem("myzoda-user"))
     console.log(userData)
    
+    const userWallet = userData.wallet
+    const totalQuantity = userWallet.reduce((total, crypto) => total + crypto.quantity, 0)
+
+
 
     return (
         <div>
@@ -117,65 +81,60 @@ export default function Dashboard() {
                     <div className="link-tag content-admin-main">
 
                         <div className="link-tag wt-admin-right-page-header clearfix">
-                            <h2>{userData.email}</h2>
-                            <div className="link-tag breadcrumbs"><a href=" #">Home</a><span> My referral code:  {userData.refCode}</span></div>
+                            <h2>$ {userData.balance}</h2>
+                            <Link to="/dash-fund-wallet">Fund Account</Link>
+                            <div className="link-tag breadcrumbs"><a href=" #">Home</a><span> My referral code:  {userData.myRefCode}</span></div>
+
+                            <div>
+                            <div className="header-right">
+              <ul className="header-widget-wrap">
+                <form
+                  action=""
+                  className=""
+                >
+              <input
+            type="text"
+            placeholder="Search for coin"
+            value={searchTerm}
+            onChange={handleSearch}
+            style={{padding: "10px"}}
+        />
+                 {
+                    searchTerm ? (<div style={{display: "block"}}>
+                    {filteredCrypto && Object.values(filteredCrypto).map(cryptoItem => (
+            <div style={{zIndex:"1",height:"150px", display:"block" }} className="" key={cryptoItem.id}>
+                <ul>
+                    <li style={{listStyle: "none", background: "white", padding: "10px"}}>{cryptoItem.name}</li>
+                </ul>
+            </div>
+        ))}
+                    </div>) : null    
+                  }
+                </form>
+              
+              </ul>
+            </div>
+                            </div>
                         </div>
 
                         <div className="link-tag twm-dash-b-blocks mb-5">
                             <div className="link-tag row">
-                                <div className="link-tag col-xl-3 col-lg-6 col-md-12 mb-3">
-                                    <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-body wt-panel-body gradi-1 dashboard-card ">
-                                            <div className="link-tag wt-card-wrap">
-                                                <div className="link-tag wt-card-icon"><i className="link-tag far fa-address-book"></i></div>
-                                                <div className="link-tag wt-card-right wt-total-active-listing counter ">{sales? sales.length : null  }</div>
-                                                <div className="link-tag wt-card-bottom ">
-                                                    <h4 className="link-tag m-b0">Total sales Agent</h4>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
+                            {crypto && Object.keys(crypto).map((key) => (
+                <div key={key} className="link-tag col-xl-3 col-lg-6 col-md-12 mb-3">
+                    <div className="link-tag panel panel-default">
+                        <div className="link-tag panel-body wt-panel-body gradi-1 dashboard-card ">
+                            <div className="link-tag wt-card-wrap">
+                            <div className="link-tag wt-card-icon"><i className="link-tag far fa-file-alt"></i></div>
+                                <div className="link-tag wt-card-right wt-total-active-listing counter ">{crypto[key].symbol}</div>
+                                <div className="link-tag wt-card-bottom ">
+                                    <h4 className="link-tag m-b0">{crypto[key].price}</h4>
                                 </div>
-                                <div className="link-tag col-xl-3 col-lg-6 col-md-12 mb-3">
-                                    <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-body wt-panel-body gradi-2 dashboard-card ">
-                                            <div className="link-tag wt-card-wrap">
-                                                <div className="link-tag wt-card-icon"><i className="link-tag far fa-file-alt"></i></div>
-                                                <div className="link-tag wt-card-right  wt-total-listing-view counter ">{dealName? dealName.length : null}</div>
-                                                <div className="link-tag wt-card-bottom">
-                                                    <h4 className="link-tag m-b0">Total Deals</h4>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="link-tag col-xl-3 col-lg-6 col-md-12 mb-3">
-                                    <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-body wt-panel-body gradi-3 dashboard-card ">
-                                            <div className="link-tag wt-card-wrap">
-                                                <div className="link-tag wt-card-icon"><i className="link-tag far fa-envelope"></i></div>
-                                                <div className="link-tag wt-card-right wt-total-listing-review counter ">{products? products.length : null}</div>
-                                                <div className="link-tag wt-card-bottom">
-                                                    <h4 className="link-tag m-b0">Total Products</h4>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="link-tag col-xl-3 col-lg-6 col-md-12 mb-3">
-                                    <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-body wt-panel-body gradi-4 dashboard-card ">
-                                            <div className="link-tag wt-card-wrap">
-                                                <div className="link-tag wt-card-icon"><i className="link-tag far fa-bell"></i></div>
-                                                <div className="link-tag wt-card-right wt-total-listing-bookmarked counter ">{company? company.length : null}</div>
-                                                <div className="link-tag wt-card-bottom">
-                                                
-                                                    <h4 className="link-tag m-b0">Total Company</h4>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            ))}
+                    
                             </div>
                         </div>
 
@@ -184,7 +143,7 @@ export default function Dashboard() {
                                 <div className="link-tag col-xl-6 col-lg-12 col-md-12 mb-4">
                                     <div className="link-tag panel panel-default site-bg-white">
                                         <div className="link-tag panel-heading wt-panel-heading p-a20">
-                                            <h4 className="link-tag panel-tittle m-a0"><i className="link-tag far fa-chart-bar"></i>Your Profile Views</h4>
+                                            <h4 className="link-tag panel-tittle m-a0"><i className="link-tag far fa-chart-bar"></i>Market Trend</h4>
                                         </div>
                                         <div className="link-tag panel-body wt-panel-body twm-pro-view-chart">
                                             <canvas id="profileViewChart"></canvas>
@@ -196,19 +155,22 @@ export default function Dashboard() {
 
                                 <div className="link-tag col-xl-6 col-lg-12 col-md-12 mb-4">
                                     <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-heading wt-panel-heading p-a20">
-                                            <h4 className="link-tag panel-tittle m-a0">Sales Agents</h4>
+                                        <div className="link-tag panel-heading wt-panel-heading p-a20 d-flex align-items-center justify-content-between">
+                                            <h4 className="link-tag panel-tittle m-a0">My wallet</h4>
+                                            <h4 className="link-tag panel-tittle m-a0">$ {totalQuantity? totalQuantity : 0 }</h4>
                                         </div>
                                         <div className="link-tag panel-body wt-panel-body bg-white">
                                             <div className="link-tag dashboard-messages-box-scroll scrollbar-macosx">
                                             {
-                                                agent && agent.map((agent)=>(
+                                           userWallet && userWallet.map((crypto)=>(
 
-                                                <div className="link-tag dashboard-messages-box">
-                                                    <div className="link-tag dashboard-message-avtar"><img src={agent.image} alt="" /></div>
+                                                <div className="link-tag dashboard-messages-box d-flex align-items-center justify-content-between">
                                                     <div className="link-tag dashboard-message-area">
-                                                        <h5>{agent.fullName}</h5>
-                                                        <p>{agent.email}</p>
+                                                        <h5>{crypto.symbol}</h5>
+                                                        <p>{crypto.currentPrice}</p>
+                                                    </div>
+                                                    <div className="link-tag dashboard-message-area">
+                                                        <p>{crypto.quantity}</p>
                                                     </div>
                                                 </div>
                                                 ))
@@ -226,7 +188,7 @@ export default function Dashboard() {
                                 <div className="link-tag col-lg-12 col-md-12 mb-4">
                                     <div className="link-tag panel panel-default site-bg-white m-t30">
                                         <div className="link-tag panel-heading wt-panel-heading p-a20">
-                                            <h4 className="link-tag panel-tittle m-a0"><i className="link-tag far fa-list-alt"></i>Recent Deals</h4>
+                                            <h4 className="link-tag panel-tittle m-a0"><i className="link-tag far fa-list-alt"></i>Trending Cryptocurrencies</h4>
                                         </div>
                                         <div className="link-tag panel-body wt-panel-body">
 
@@ -234,15 +196,15 @@ export default function Dashboard() {
                                                 <ul>
 
                                                     {
-                                                        deals && deals.map((deal)=>(
+                                                      allCrypto && Object.values(allCrypto).map((crypto)=>(
                                                             <li>
-                                                                <i className="link-tag fa fa-envelope text-success list-box-icon"></i>{deal.dealName}
-                                                                {/* <a href=" #" className="link-tag close-list-item color-lebel clr-red">
-                                                                    <i className="link-tag far fa-trash-alt"></i>
-                                                                </a> */}
+                                                                <i className="link-tag fas fa-dollar-sign text-success list-box-icon"></i>{crypto.name} 
+                                                                <a href=" #" className="link-tag close-list-item color-lebel clr-red">
+                                                                {crypto.price}
+                                                                </a>
                                                             </li>
-                                                        ))
-                                                    }
+                                                      
+                                                  )  )} 
                                                 </ul>
 
                                             </div>
@@ -251,252 +213,7 @@ export default function Dashboard() {
                                     </div>
                                 </div>
 
-                                <div className="link-tag col-lg-12 col-md-12 mb-4">
-                                    <div className="link-tag panel panel-default">
-                                        <div className="link-tag panel-heading wt-panel-heading p-a20">
-                                            <h4 className="link-tag panel-tittle m-a0">Recent Companies</h4>
-                                        </div>
-                                        <div className="link-tag panel-body wt-panel-body bg-white">
-                                            <div className="link-tag twm-dashboard-candidates-wrap">
-                                                <div className="link-tag row">
-                                                    {
-                                                        companies && companies.map((comp)=>(
-
-                                                    <div className="link-tag col-xl-6 col-lg-12 col-md-12">
-                                                        <div className="link-tag twm-dash-candidates-list">
-                                                            <div className="link-tag twm-media">
-                                                                <div className="link-tag twm-media-pic">
-                                                                    <img src={comp.image} alt="#" />
-                                                                </div>
-
-                                                            </div>
-                                                            <div className="link-tag twm-mid-content">
-                                                                <a href=" #" className="link-tag twm-job-title">
-                                                                    <h4>{comp.companyName} </h4>
-                                                                </a>
-                                                                <p>{comp.managerName}</p>
-
-                                                                <div className="link-tag twm-fot-content">
-                                                                    <div className="link-tag twm-left-info">
-                                                                        <p className="link-tag twm-candidate-address"><i className="link-tag feather-map-pin"></i>{comp.email}</p>
-                                                                        {/* <div className="link-tag twm-jobs-vacancies">$20<span>/ Day</span></div> */}
-                                                                    </div>
-                                                                    {/* <div className="link-tag twm-right-btn">
-
-                                                                        <ul className="link-tag twm-controls-icon list-unstyled">
-                                                                            <li>
-                                                                                <button title="View profile" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag fa fa-eye"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Send message" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-envelope-open"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-trash-alt"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                        </ul>
-
-                                                                    </div> */}
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-                                                        ))
-                                                    }
-
-{/* 
-                                                    <div className="link-tag col-xl-6 col-lg-12 col-md-12">
-                                                        <div className="link-tag twm-dash-candidates-list">
-                                                            <div className="link-tag twm-media">
-                                                                <div className="link-tag twm-media-pic">
-                                                                    <img src={pic2} alt="#" />
-                                                                </div>
-
-                                                            </div>
-                                                            <div className="link-tag twm-mid-content">
-                                                                <a href=" #" className="link-tag twm-job-title">
-                                                                    <h4>Peter Hawkins</h4>
-                                                                </a>
-                                                                <p>Medical Professed</p>
-
-                                                                <div className="link-tag twm-fot-content">
-                                                                    <div className="link-tag twm-left-info">
-                                                                        <p className="link-tag twm-candidate-address"><i className="link-tag feather-map-pin"></i>New York</p>
-                                                                        <div className="link-tag twm-jobs-vacancies">$7<span>/ Hour</span></div>
-                                                                    </div>
-                                                                    <div className="link-tag twm-right-btn">
-
-                                                                        <ul className="link-tag twm-controls-icon list-unstyled">
-                                                                            <li>
-                                                                                <button title="View profile" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag fa fa-eye"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Send message" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-envelope-open"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-trash-alt"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                        </ul>
-
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="link-tag col-xl-6 col-lg-12 col-md-12">
-                                                        <div className="link-tag twm-dash-candidates-list">
-                                                            <div className="link-tag twm-media">
-                                                                <div className="link-tag twm-media-pic">
-                                                                    <img src={pic3} alt="#" />
-                                                                </div>
-
-                                                            </div>
-                                                            <div className="link-tag twm-mid-content">
-                                                                <a href=" #" className="link-tag twm-job-title">
-                                                                    <h4>Ralph Johnson  </h4>
-                                                                </a>
-                                                                <p>Bank Manger</p>
-
-                                                                <div className="link-tag twm-fot-content">
-                                                                    <div className="link-tag twm-left-info">
-                                                                        <p className="link-tag twm-candidate-address"><i className="link-tag feather-map-pin"></i>New York</p>
-                                                                        <div className="link-tag twm-jobs-vacancies">$180<span>/ Day</span></div>
-                                                                    </div>
-                                                                    <div className="link-tag twm-right-btn">
-                                                                        <ul className="link-tag twm-controls-icon list-unstyled">
-                                                                            <li>
-                                                                                <button title="View profile" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag fa fa-eye"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Send message" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-envelope-open"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-trash-alt"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="link-tag col-xl-6 col-lg-12 col-md-12">
-                                                        <div className="link-tag twm-dash-candidates-list">
-                                                            <div className="link-tag twm-media">
-                                                                <div className="link-tag twm-media-pic">
-                                                                    <img src={pic4} alt="#" />
-                                                                </div>
-
-                                                            </div>
-                                                            <div className="link-tag twm-mid-content">
-                                                                <a href=" #" className="link-tag twm-job-title">
-                                                                    <h4>Randall Henderson </h4>
-                                                                </a>
-                                                                <p>IT Contractor</p>
-
-                                                                <div className="link-tag twm-fot-content">
-                                                                    <div className="link-tag twm-left-info">
-                                                                        <p className="link-tag twm-candidate-address"><i className="link-tag feather-map-pin"></i>New York</p>
-                                                                        <div className="link-tag twm-jobs-vacancies">$90<span>/ Week</span></div>
-                                                                    </div>
-                                                                    <div className="link-tag twm-right-btn">
-                                                                        <ul className="link-tag twm-controls-icon list-unstyled">
-                                                                            <li>
-                                                                                <button title="View profile" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag fa fa-eye"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Send message" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-envelope-open"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-trash-alt"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div>
-
-                                                    <div className="link-tag col-xl-6 col-lg-12 col-md-12">
-                                                        <div className="link-tag twm-dash-candidates-list">
-                                                            <div className="link-tag twm-media">
-                                                                <div className="link-tag twm-media-pic">
-                                                                    <img src={pic5} alt="#" />
-                                                                </div>
-
-                                                            </div>
-                                                            <div className="link-tag twm-mid-content">
-                                                                <a href=" #" className="link-tag twm-job-title">
-                                                                    <h4>Christina Fischer </h4>
-                                                                </a>
-                                                                <p>Charity &amp; Voluntary</p>
-
-                                                                <div className="link-tag twm-fot-content">
-                                                                    <div className="link-tag twm-left-info">
-                                                                        <p className="link-tag twm-candidate-address"><i className="link-tag feather-map-pin"></i>New York</p>
-                                                                        <div className="link-tag twm-jobs-vacancies">$19<span>/ Hour</span></div>
-                                                                    </div>
-                                                                    <div className="link-tag twm-right-btn">
-                                                                        <ul className="link-tag twm-controls-icon list-unstyled">
-                                                                            <li>
-                                                                                <button title="View profile" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag fa fa-eye"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Send message" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-envelope-open"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                            <li>
-                                                                                <button title="Delete" data-bs-toggle="tooltip" data-bs-placement="top">
-                                                                                    <span className="link-tag far fa-trash-alt"></span>
-                                                                                </button>
-                                                                            </li>
-                                                                        </ul>
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                        </div>
-                                                    </div> */}
-
-
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-
+                               
                             </div>
                         </div>
 

@@ -1,81 +1,86 @@
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { Navigate, useLocation, useNavigate } from "react-router-dom";
-import { BASEURL } from "../common/config";
-import right_pic1 from "../assets/images/images/home-11/banner-bg/right-pic1.jpg";
-import Admin_Nav from "../components/admin-nav";
+import {Link, useNavigate } from "react-router-dom";
 import "../styles/verify-admin.css";
 
 export default function SignUp() {
-  const [role, setRole] = useState("");
   const [phone, setPhone] = useState("");
-  const [confirmP, setConfirmP] = useState("");
+  const [confirmPassword, setconfirmPassword] = useState("");
   const [email, setEmail] = useState("");
+  const [referral, setRefferal] = useState()
   const [password, setPassword] = useState("");
-  const [err, setErr] = useState({ error: false, msg: "" });
+  const [err, setErr] = useState(false);
   const navigate = useNavigate();
-  const location = useLocation();
 
   const [loading, setLoading] = useState(false);
   const signUP = (e) => {
     e.preventDefault();
 
-    let ref = "ref-c- " + Math.floor(Math.random() * 1000 + 1);
+    if (phone === "" || email === "" || password === "" || confirmPassword === "") {
+      setErr(true);
+      return;
+    }
+
+    if(password != confirmPassword){
+        alert("password & confirm password are not the same")
+        return 
+    }
+    
+    let ref = Math.floor(Math.random() * 1000 + 1);
 
     setLoading(true);
     const userData = {
       email: email,
-      password,
+      password: password,
       phone: phone,
-      refCode: ref,
-      referral: [],
+      myRefCode: ref,
+      referral: referral,
       wallet: [],
       balance: 0,
     };
+    let allUsers = JSON.parse(localStorage.getItem("myzoba")) || [];
+    
 
-    console.log(userData);
+    if (!Array.isArray(allUsers)) {
+        allUsers = [];
+    }
+    
+    allUsers.push(userData);
 
-    let users = JSON.parse(localStorage.getItem("myzoba")) || [];
+    localStorage.setItem("myzoba", JSON.stringify(allUsers));
 
-    users.push(userData);
+    let getAllUsers = JSON.parse(localStorage.getItem("myzoba")) || [];
+    let getReferral =  getAllUsers.find((ref, index)=> ref.referral === referral)
 
-    localStorage.setItem("myzoba", JSON.stringify(users));
+    let userIndex=null
+
+    getAllUsers.forEach((ref,index) => {
+  
+      if(ref.myRefCode === parseInt(referral)){
+        console.log(ref.myRefCode);
+        userIndex = index;
+      }
+    });
+
+    console.log("INDEX>>>"+userIndex)
+    
+   
+
+   
+    if (!userIndex) {
+      console.log("Referral does not exist");
+  } else {
+      // Update the balance of the user with the referral
+      getAllUsers[userIndex]["balance"]= getAllUsers[userIndex]["balance"] + 10;
+  
+      // Save the updated users array back to local 
+      localStorage.setItem("myzoba", JSON.stringify(getAllUsers));
+  
+      console.log("Referral found and balance updated successfully");
+  }
 
     navigate("/");
-    setLoading(false);
-  };
-
-  const switchRole = (e) => {
-    setRole(e);
-  };
-  const handleChange = (e) => {
-    const { value, name } = e.target;
-
-    if (name == "email") {
-      setEmail(value);
-    } else if (name == "phone") {
-      setPhone(value);
-    } else if (name == "Password") {
-      setPassword(value);
-    } else if (name == "confirm password") {
-      setConfirmP(value);
-    }
-
-    if (name == "email" && email === "") {
-      setErr({ msg: "email", error: true });
-      return;
-    } else if (name == "phone" && phone === "") {
-      setErr({ msg: "phone", error: true });
-      return;
-    } else if (name == "Password" && password === "") {
-      setErr({ msg: "password", error: true });
-      return;
-    } else if (name == "confirm password" && confirmP !== password) {
-      setErr({ msg: "confirm-p", error: true });
-      return;
-    } else {
-      setErr({ msg: "", error: false });
-    }
+    
   };
 
   return (
@@ -89,48 +94,44 @@ export default function SignUp() {
               <div className="col-lg-12">
                 <div className="form-group mb-3">
                   <input
-                    onChange={handleChange}
+                    onChange={(e) => setEmail(e.target.value)}
                     value={email}
                     name="email"
                     type="email"
-                    // required=""
+             
                     className="form-control"
                     placeholder="email*"
                   />
                 </div>
                 <div>
-                  {err.error === true && err.msg === "email" ? (
-                    <span style={{ background: "crimson" }}>Enter email</span>
-                  ) : (
-                    email === null
-                  )}
+                  {err === true && email === "" ? (
+                    <span style={{ color: "crimson" }}>Enter email</span>
+                  ) : null}
                 </div>
               </div>
               <div className="col-lg-12">
                 <div className="form-group mb-3">
                   <input
-                    onChange={handleChange}
+                    onChange={(e) =>setPhone(e.target.value)}
                     value={phone}
                     name="phone"
-                    type="Phone*"
+                    type="number*"
                     // required=""
                     className="form-control"
                     placeholder="phone*"
                   />
                 </div>
                 <div>
-                  {err.error === true && err.msg === "phone" ? (
-                    <span style={{ background: "crimson" }}>Enter phone</span>
-                  ) : (
-                    phone === null
-                  )}
+                  {err === true && phone === "" ? (
+                    <span style={{ color: "crimson" }}>Enter phone</span>
+                  ) : null}
                 </div>
               </div>
 
               <div className="col-lg-12">
                 <div className="form-group mb-3">
                   <input
-                    onChange={handleChange}
+                    onChange={(e) => setPassword(e.target.value)}
                     value={password}
                     name="Password"
                     type="password"
@@ -140,21 +141,17 @@ export default function SignUp() {
                   />
                 </div>
                 <div>
-                  {err.error === true && err.msg === "password" ? (
-                    <span style={{ background: "crimson" }}>
-                      Enter Password
-                    </span>
-                  ) : (
-                    password === null
-                  )}
+                  {err === true && password === "" ? (
+                    <span style={{ color: "crimson" }}>Enter Password</span>
+                  ) : null}
                 </div>
               </div>
 
               <div className="col-lg-12">
                 <div className="form-group mb-3">
                   <input
-                    onChange={handleChange}
-                    value={confirmP}
+                    onChange={(e) => setconfirmPassword(e.target.value)}
+                    value={confirmPassword}
                     name="confirm password"
                     type="password"
                     className="form-control"
@@ -163,13 +160,21 @@ export default function SignUp() {
                   />
                 </div>
                 <div>
-                  {err.error === true && err.msg === "confirm-p" ? (
-                    <span style={{ background: "crimson" }}>
-                      confirm password
-                    </span>
-                  ) : (
-                    confirmP === null
-                  )}
+                  {err === true && confirmPassword === "" ? (
+                    <span style={{ color: "crimson" }}>confirm password</span>
+                  ) : null}
+                </div>
+              </div>
+              <div className="col-lg-12">
+                <div className="form-group mb-3">
+                  <input
+                    onChange={(e) => setRefferal(e.target.value)}
+                    value={referral}
+                    name="referralCode"
+                    type="text"
+                    className="form-control"
+                    placeholder="Referral Code (optional)"
+                  />
                 </div>
               </div>
 
@@ -196,16 +201,10 @@ export default function SignUp() {
                   {loading ? "Processing..." : " Sign Up"}
                 </button>
                 <div className="mt-3 mb-3">
-                  Don't have an account ?
-                  {/* <button
-                                className="twm-backto-sign_UP"
-                                data-bs-target="#sign_up_popup"
-                                data-bs-toggle="modal"
-                                data-bs-dismiss="modal"
-                              >
-                                Sign Up
-                              </button> */}
+                 Have an account ? 
+                 
                 </div>
+                <Link to="/">Login</Link>
               </div>
             </div>
           </div>

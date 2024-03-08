@@ -4,9 +4,7 @@ export default function Logout_Pop() {
 
     const logoutProfile = () => {
 
-        localStorage.removeItem("token");
-        localStorage.removeItem("user-details");
-        localStorage.removeItem("com-details");
+        localStorage.removeItem("myzoda-user");
         window.location.href="/"
     }
 

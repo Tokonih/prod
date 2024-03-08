@@ -1,57 +1,44 @@
-import { Link } from "react-router-dom";
-import pic1 from "../assets/images/images/candidates/pic1.jpg";
-// import logo_white from "../assets/images/images/logo-white.png"
-import logo from "../assets/images/images/logo-dark.png";
+
+import { useNavigate } from "react-router-dom";
 import Dash_Header from "../components/Dashheader";
 import { useEffect, useState } from "react";
-import { BASEURL } from "../common/config";
-import axios from "axios";
 
-export default function DashPostCompanyType() {
 
-  const [name, setName ] = useState();
+export default function Fund_wallet() {
+
+  const [amount, setAmount] = useState();
 
   const [err, setErr] = useState(false);
-
+  const navigate = useNavigate()
 
 
   const [ loading, setLoading] = useState(false)
   const postJobCategory = (e) => {
     e.preventDefault();
-    setLoading(true)
     if (
-      name === undefined
-    ) {
-      setErr(true);
-      return;
-    }
+      amount === undefined
+      ) {
+        setErr(true);
+        return;
+      }
+      setLoading(true)
 
-    const companyType = {
- 
-      typeOfCompany: name,
-
-    };
-    console.log(companyType);
-
-    let apiURL = BASEURL + "/sales-agent/company/type"
-
-    let adminToken = localStorage.getItem("sator-agent-token");
-    console.log(adminToken)
-    
-    const headers = {
-        's-token': `${adminToken}`, 
-        'Content-Type': 'application/json', 
-    };
-
-    axios.post(apiURL, companyType, {headers})
-    .then((res)=> {
-        console.log(res.data)
-    }).catch((err)=>{
-        console.log(err)
-    })
-    .finally(()=>{
-      setLoading(false)
-    })
+    try {
+      const userData = JSON.parse(localStorage.getItem("myzoda-user"));
+      console.log(userData);
+      let userBalance = parseFloat(userData.balance) + parseFloat(amount);
+      console.log(userBalance);
+      // Save the updated balance back to local storage
+      userData.balance = userBalance;
+      localStorage.setItem("myzoda-user", JSON.stringify(userData));
+      alert("Account funded")
+      navigate("/dashboard")
+  } catch (error) {
+      console.error("Error retrieving wallet data from local storage:", error);
+  }
+  finally{
+    setLoading(false)
+  }
     
 
   };
@@ -65,11 +52,11 @@ export default function DashPostCompanyType() {
         <div id="content">
           <div className="content-admin-main">
             <div className="wt-admin-right-page-header clearfix">
-              <h2>Post Company Type</h2>
+              <h2> Fund wallet</h2>
               <div className="breadcrumbs">
                 <a href="#">Home</a>
                 <a href="#">Dasboard</a>
-                <span>Company Type Form</span>
+                <span>Fund wallet Form</span>
               </div>
             </div>
 
@@ -77,7 +64,7 @@ export default function DashPostCompanyType() {
             <div className="panel panel-default">
               <div className="panel-heading wt-panel-heading p-a20">
                 <h4 className="panel-tittle m-a0">
-                  <i className="fa fa-suitcase"></i>Company Type
+                  <i className="fas fa-dollar-sign"></i>Fund wallet  (USDT)
                 </h4>
               </div>
               <div className="panel-body wt-panel-body p-a20 m-b30 ">
@@ -91,40 +78,32 @@ export default function DashPostCompanyType() {
                       {/* <!--Start Date--> */}
                       <div className="col-xl-4 col-lg-6 col-md-12">
                       <div className="form-group">
-                        <label>Name</label>
+                        <label>Amount</label>
                         <div className="ls-inputicon-box">
                           <input
                             className="form-control"
                             name="company_Email"
                             type="text"
-                            placeholder="Drugs"
-                            onChange={(e) => setName(e.target.value)}
-                            value={name}
+                            placeholder="10000"
+                            onChange={(e) => setAmount(e.target.value)}
+                            value={amount}
                           />
-                          <i className="fs-input-icon fa fa-map-pin"></i>
+                          <i className="fs-input-icon fas fa-dollar-sign"></i>
                         </div>
                         <div style={{color: "red"}}>
-                          {err === true && name === undefined ? (
-                            <span>Enter job category name  </span>
+                          {err === true && amount === undefined ? (
+                            <span>Enter amount  </span>
                           ) : (
-                            name === null
+                            amount === null
                           )}
                         </div>
                       </div>
                     </div>
 
-                    
-
-               
-
-
-
-                  
-
                     <div className="col-lg-12 col-md-12">
                       <div className="text-left">
                         <button type="submit" className="site-button m-r5">
-                         {loading ? "processing" : " Publish Company Type"}
+                         {loading ? "processing" : "Fund wallet"}
                         </button>
                         {/* <button
                           type="submit"
